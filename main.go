@@ -1,181 +1,209 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/sha1"
-	"errors"
+	"Kademlia/pkg/global"
+	"Kademlia/pkg/kencode"
+	"Kademlia/pkg/peer"
+	"bytes"
+	"flag"
 	"fmt"
-	"io"
+	"log"
 	"net"
 	"os"
-)
-
-const (
-	BucketSize            = 160
-	DhtIDSize             = 160
-	KademliaDirectoryPath = "~/kademlia"
-	KademliaFilesPath     = "~/kademlia/files"
+	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 var BootstrapNode = []string{
 	"",
 }
 
-type DhtID []byte
+var create = flag.String("create", "", "create a new node")
+var join = flag.String("join", "", "join nodes network")
+var ping = flag.String("ping", "", "ping node")
+var store = flag.String("store", "", "store data")
+var findNode = flag.String("find_node", "", "find a node")
+var findValue = flag.String("find_value", "", "find a value")
+var run = flag.String("run", "", "run node")
 
-func (d DhtID) String() string {
-	return string(d)
-}
-
-func NewDhtID() (DhtID, error) {
-	nodeID, err := generateNodeID()
+func Run(peerNode *peer.PeerNode) {
+	listener, err := net.ListenTCP("tcp", &peerNode.Address)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
+	defer listener.Close()
 
-	return nodeID, nil
-}
-func (d DhtID) XOR(id DhtID) (DhtID, error) {
-	if len(d) != DhtIDSize || len(id) != DhtIDSize {
-		return nil, errors.New("invalid DhtID")
-	}
+	fmt.Println("Kademlia: Listening on " + peerNode.Address.String())
 
-	result := make([]byte, len(d))
+	go func() {
+		var command, value string
 
-	for i := 0; i < len(result); i++ {
-		result[i] = id[i] ^ d[i]
-	}
+		for {
+			fmt.Print("Kademlia Commander> ")
+			_, err = fmt.Scanf("%s %s", &command, &value)
 
-	return result, nil
-}
+			if err != nil {
+				log.Println("???? " + err.Error())
+			}
 
-type DhtNode struct {
-	ID       DhtID
-	KBuckets [BucketSize][]DhtID
-}
+			switch command {
+			case "ping":
+				addr := strings.Split(value, ":")
+				ip := addr[0]
+				_, err := strconv.Atoi(addr[1])
 
-func generateNodeID() ([]byte, error) {
-	randomBytes := make([]byte, BucketSize)
+				if err != nil {
+					log.Println(err)
+					continue
+				}
 
-	_, err := io.ReadFull(rand.Reader, randomBytes)
-	if err != nil {
-		return nil, err
-	}
+				if !global.ValidateIPAddress(ip) {
+					log.Println("Kademlia: Invalid IP address, Please Try it Again")
+					continue
+				}
 
-	hash := sha1.New()
-	hash.Write(randomBytes)
-	nodeID := hash.Sum(nil)
+				err = peerNode.Ping(value)
+				if err != nil {
+					log.Println(err)
+				}
+			}
 
-	return nodeID, nil
-}
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}()
 
-func NewDhtNode() (*DhtNode, error) {
-	nodeID, err := NewDhtID()
-	if err != nil {
-		return nil, err
-	}
-
-	return &DhtNode{ID: nodeID}, nil
-}
-
-func (dhtNode *DhtNode) Distance(id DhtID) (int, error) {
-	result, err := dhtNode.ID.XOR(id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	k := DhtIDSize
-
-	for i := 0; i < len(result); i++ {
-		if result[i] != id[k] {
-			break
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Println(err)
 		}
 
-		k--
+		// 接收信號，並返回信號
+		go func() {
+			defer conn.Close()
+
+			var buffer bytes.Buffer
+
+			_, err := buffer.ReadFrom(conn)
+			if err != nil {
+				log.Println(err)
+			}
+
+			kenCode := kencode.NewDecoder(buffer.String()).Decode()
+
+			for i := 0; i < len(kenCode.Commands); i++ {
+				switch kenCode.Commands[i] {
+				case "PING":
+					fmt.Println("Kademlia> " + conn.RemoteAddr().String() + " PONG")
+					response := kencode.NewEncoder().ResponsePing().Encode()
+					_, err := conn.Write([]byte(response))
+					if err != nil {
+						log.Println(err)
+					}
+				default:
+					log.Printf("Unknown command: %s", kenCode.Commands[i])
+				}
+			}
+		}()
 	}
-
-	return k, nil
-}
-
-func (dhtNode *DhtNode) addKBucket(id DhtID) error {
-	distance, err := dhtNode.Distance(id)
-	if err != nil {
-		return err
-	}
-
-	if dhtNode.KBuckets[distance-1] == nil {
-		dhtNode.KBuckets[distance-1] = make([]DhtID, 0)
-	}
-
-	dhtNode.KBuckets[distance-1] = append(dhtNode.KBuckets[distance-1], id)
-
-	return nil
-}
-
-func (dhtNode *DhtNode) FindKBucketByDhtID(id DhtID) ([]DhtID, error) {
-	distance, err := dhtNode.Distance(id)
-	if err != nil {
-		return nil, err
-	}
-
-	if dhtNode.KBuckets[distance-1] == nil {
-		return nil, errors.New("not found")
-	}
-
-	return dhtNode.KBuckets[distance-1], nil
-}
-
-type PeerNode struct {
-	DhtNode        DhtNode             // 本節點的Dht Node
-	Address        net.Addr            // 本節點的 IP Address
-	DhtIDToAddress map[string]net.Addr // 將DhtID 轉換成string 然後映射到對應用 IP Address
-}
-
-func NewPeerNode(ip string) (*PeerNode, error) {
-	dhtNode, err := NewDhtNode()
-	if err != nil {
-		return nil, err
-	}
-
-	return &PeerNode{DhtNode: *dhtNode, Address: &net.TCPAddr{IP: net.IP(ip)}}, nil
-}
-
-func (peerNode *PeerNode) Ping() error {
-
-	return nil
-}
-
-func (peerNode *PeerNode) Store() error {
-
-	return nil
-}
-
-func (peerNode *PeerNode) FindNode() error {
-
-	return nil
-}
-
-func (peerNode *PeerNode) FindValue() error {
-
-	return nil
-}
-
-func (peerNode *PeerNode) Download() error {
-
-	return nil
-}
-
-func (peerNode *PeerNode) Upload() error {
-
-	return nil
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: ./kademlia [create <ip> | join <bootstrap ips...> | ping <ip> | store <data> | find_node <DhtID> | find_value <file_hash_key>]")
+	_ = os.Mkdir(global.KademliaDirectoryPath, 0777)
+	_ = os.Mkdir(global.KademliaNodesPath, 0777)
+	_ = os.Mkdir(global.KademliaFilesPath, 0777)
+
+	flag.Usage = func() {
+		_, _ = fmt.Fprintf(os.Stderr, "Usage: \n")
+		_, _ = fmt.Fprintf(os.Stderr, "	./kademlia [create <ip> "+
+			"| join <bootstrap_nodes filepath> "+
+			"| store <data>] "+
+			"| find_node <DhtID> "+
+			"| find_value <FileHash> "+
+			"| run <DhtID>\n")
+		flag.PrintDefaults()
+	}
+
+	flag.Parse()
+
+	bootstrapNodeFilename := filepath.Join(global.KademliaNodesPath, "bootstrap_nodes.txt")
+
+	_, err := os.Stat(bootstrapNodeFilename)
+	if os.IsNotExist(err) {
+		_, _ = os.Create(bootstrapNodeFilename)
+	}
+
+	if *create != "" {
+		fmt.Println("Create node:", *create)
+		node, err := peer.NewPeerNode(*create)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		*create = strings.Replace(*create, ":", "_", -1)
+
+		filePath := filepath.Join(global.KademliaNodesPath, *create)
+
+		data, err := node.Marshal()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		_, err = f.Write(data)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		return
 	}
 
-	fmt.Println("OK")
+	if *join != "" {
+		fmt.Println("Join node:", *join)
+		return
+	}
+
+	if *ping != "" {
+		fmt.Println("Ping node:", *ping)
+		return
+	}
+
+	if *store != "" {
+		fmt.Println("Store node:", *store)
+		return
+	}
+
+	if *findNode != "" {
+		fmt.Println("Find node:", *findNode)
+		return
+	}
+
+	if *findValue != "" {
+		fmt.Println("Find value:", *findValue)
+		return
+	}
+
+	if *run != "" {
+		fmt.Println("Run node:", *run)
+
+		*run = strings.Replace(*run, ":", "_", -1)
+
+		node, err := peer.NewPeerNodeByPeerFile(*run)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		Run(node)
+
+		return
+	}
 }
