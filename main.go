@@ -4,7 +4,6 @@ import (
 	"Kademlia/pkg/global"
 	"Kademlia/pkg/kencode"
 	"Kademlia/pkg/peer"
-	"bytes"
 	"flag"
 	"fmt"
 	"log"
@@ -37,14 +36,15 @@ func Run(peerNode *peer.PeerNode) {
 	fmt.Println("Kademlia: Listening on " + peerNode.Address.String())
 
 	go func() {
-		var command, value string
-
 		for {
+			var command, value string
 			fmt.Print("Kademlia Commander> ")
-			_, err = fmt.Scanf("%s %s", &command, &value)
+			_, _ = fmt.Scanf("%s %s", &command, &value)
+			fmt.Scanln()
 
-			if err != nil {
-				log.Println("???? " + err.Error())
+			if command == "" || value == "" {
+				fmt.Println("\rEmpty Input")
+				continue
 			}
 
 			switch command {
@@ -55,12 +55,12 @@ func Run(peerNode *peer.PeerNode) {
 
 				if err != nil {
 					log.Println(err)
-					continue
+					// continue
 				}
 
 				if !global.ValidateIPAddress(ip) {
 					log.Println("Kademlia: Invalid IP address, Please Try it Again")
-					continue
+					// continue
 				}
 
 				err = peerNode.Ping(value)
@@ -68,15 +68,13 @@ func Run(peerNode *peer.PeerNode) {
 					log.Println(err)
 				}
 			}
-
-			if err != nil {
-				log.Println(err)
-			}
 		}
 	}()
 
+	// 監聽每一個連接
 	for {
 		conn, err := listener.Accept()
+		// fmt.Printf("\r%s> connection\n", conn.RemoteAddr().String())
 		if err != nil {
 			log.Println(err)
 		}
@@ -85,26 +83,28 @@ func Run(peerNode *peer.PeerNode) {
 		go func() {
 			defer conn.Close()
 
-			var buffer bytes.Buffer
+			buf := make([]byte, 10000)
 
-			_, err := buffer.ReadFrom(conn)
+			_, err := conn.Read(buf)
 			if err != nil {
 				log.Println(err)
 			}
 
-			kenCode := kencode.NewDecoder(buffer.String()).Decode()
+			kenCode := kencode.NewDecoder(string(buf)).Decode()
 
 			for i := 0; i < len(kenCode.Commands); i++ {
 				switch kenCode.Commands[i] {
-				case "PING":
-					fmt.Println("Kademlia> " + conn.RemoteAddr().String() + " PONG")
+				case kencode.PING:
 					response := kencode.NewEncoder().ResponsePing().Encode()
 					_, err := conn.Write([]byte(response))
 					if err != nil {
 						log.Println(err)
 					}
+				// case kencode.PONG:
+				// 	fmt.Printf("%s> %s: PONG", conn.RemoteAddr().String(), kenCode.Values[i])
+				// 	fmt.Println("Kadelima Commander> ")
 				default:
-					log.Printf("Unknown command: %s", kenCode.Commands[i])
+					log.Printf("\rUnknown command: %s\n", kenCode.Commands[i])
 				}
 			}
 		}()

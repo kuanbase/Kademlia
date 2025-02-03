@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -89,22 +91,48 @@ func (peerNode *PeerNode) Unmarshal(data []byte) error {
 }
 
 func (peerNode *PeerNode) Ping(address string) error {
-	conn, err := net.Dial("tcp", address)
+	conn, err := net.DialTimeout("tcp", address, 10*time.Second)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	err = conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	if err != nil {
-		return err
-	}
-
 	msg := kencode.NewEncoder().Ping(address).Encode()
+
+	// writer := bufio.NewWriter(conn)
+
+	// _, err = writer.Write([]byte(msg))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// err = writer.Flush()
+	// if err != nil {
+	// 	return err
+	// }
 
 	_, err = conn.Write([]byte(msg))
 	if err != nil {
 		return err
+	}
+
+	buf := make([]byte, 10000)
+
+	// conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_, err = conn.Read(buf)
+	if err != nil {
+		return err
+	}
+
+	kenCode := kencode.NewDecoder(string(buf)).Decode()
+
+	for i := 0; i < len(kenCode.Commands); i++ {
+		switch kenCode.Commands[i] {
+		case kencode.PONG:
+			fmt.Printf("\r%s> %s: PONG\n", conn.RemoteAddr().String(), kenCode.Values[i])
+		default:
+			log.Printf("\rUnknown command: %s\n", kenCode.Commands[i])
+		}
 	}
 
 	return nil

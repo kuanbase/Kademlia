@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+const (
+	PING = "PING"
+	PONG = "PONG"
+)
+
 type KenCode struct {
 	Commands []string
 	Values   []string
@@ -19,14 +24,14 @@ type Encoder struct {
 }
 
 func (e *Encoder) Ping(address string) *Encoder {
-	e.kenCode.Commands = append(e.kenCode.Commands, "PING")
+	e.kenCode.Commands = append(e.kenCode.Commands, PING)
 	e.kenCode.Values = append(e.kenCode.Values, address)
 	return e
 }
 
 func (e *Encoder) ResponsePing() *Encoder {
-	e.kenCode.Commands = append(e.kenCode.Commands, "PONG")
-	e.kenCode.Values = append(e.kenCode.Values, "PONG")
+	e.kenCode.Commands = append(e.kenCode.Commands, PONG)
+	e.kenCode.Values = append(e.kenCode.Values, "Alive")
 	return e
 }
 
