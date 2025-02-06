@@ -127,12 +127,14 @@ func Cli(peerNode *peer.PeerNode) {
 			for i := 0; i < len(kenCode.Commands); i++ {
 				switch kenCode.Commands[i] {
 				case kencode.RETURNID:
-					id, ok := kenCode.Values[i].(dht.DhtID)
+					data, ok := kenCode.Values[i].([]byte)
 
 					if !ok {
 						global.ErrPrintln("Please enter the dht id")
 						continue
 					}
+
+					id := dht.DhtID(data)
 
 					global.DhtIdPrintln(id)
 				default:
