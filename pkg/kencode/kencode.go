@@ -60,7 +60,7 @@ func (e *Encoder) Encode() string {
 	var kencodes []string
 
 	for i := 0; i < len(e.kenCode.Values); i++ {
-		str := fmt.Sprintf("[%s]=[%s];", e.kenCode.Commands[i], e.kenCode.Values[i])
+		str := fmt.Sprintf("[%s]=[%v];", e.kenCode.Commands[i], e.kenCode.Values[i])
 		kencodes = append(kencodes, str)
 	}
 
