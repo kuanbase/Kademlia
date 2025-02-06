@@ -5,6 +5,7 @@ import (
 	"Kademlia/pkg/global"
 	"Kademlia/pkg/kencode"
 	"Kademlia/pkg/peer"
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -127,6 +128,9 @@ func Cli(peerNode *peer.PeerNode) {
 			for i := 0; i < len(kenCode.Commands); i++ {
 				switch kenCode.Commands[i] {
 				case kencode.RETURNID:
+
+					fmt.Println("\rDEBUG> %v\n", kenCode.Values[i])
+
 					data, ok := kenCode.Values[i].([]byte)
 
 					if !ok {
