@@ -32,6 +32,11 @@ func NewPeerNode(address string) (*PeerNode, error) {
 	}
 
 	addr := strings.Split(address, ":")
+
+	if len(addr) != 2 {
+		return nil, errors.New("please enter the name like <ip>:<port>")
+	}
+
 	ip := addr[0]
 	port, err := strconv.Atoi(addr[1])
 

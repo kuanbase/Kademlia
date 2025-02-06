@@ -1,6 +1,7 @@
 package global
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
@@ -39,6 +40,18 @@ func init() {
 	_, err = os.Stat(bootstrapNodeFilename)
 	if os.IsNotExist(err) {
 		_, _ = os.Create(bootstrapNodeFilename)
+		bootstrapNodes := []string{"192.168.57.135:8081"}
+
+		f, err := os.OpenFile(bootstrapNodeFilename, os.O_WRONLY|os.O_TRUNC, 0777)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		_, err = f.Write([]byte(strings.Join(bootstrapNodes, "")))
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -76,16 +89,32 @@ func Println(s string) {
 }
 
 func CmdInput() (string, string) {
-	var command, value string
 	fmt.Print("Kademlia Commander> ")
-	_, _ = fmt.Scanf("%s %s", &command, &value)
-	fmt.Scanln()
+	reader := bufio.NewReader(os.Stdin)
+	line, _ := reader.ReadString('\n')
+	line = strings.TrimSpace(line)
+
+	if line == "Exit" || line == "exit" {
+		ExitPrintln("Ok!")
+		os.Exit(0)
+	}
+
+	s := strings.Split(line, " ")
+
+	if len(s) != 2 {
+		return "", ""
+	}
+
+	command, value := strings.TrimSpace(s[0]), strings.TrimSpace(s[1])
 
 	return command, value
 }
 
 func ErrPrintln(e string) {
 	fmt.Printf("\rError> %s\n", e)
+}
+func ExitPrintln(s string) {
+	fmt.Printf("\rExit> %s\n", s)
 }
 
 func getDefaultGatewayInterface() (string, error) {

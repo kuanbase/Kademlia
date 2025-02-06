@@ -9,8 +9,10 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 var BootstrapNode = []string{
@@ -53,6 +55,16 @@ func main() {
 	_ = os.Mkdir(global.KademliaDirectoryPath, 0777)
 	_ = os.Mkdir(global.KademliaNodesPath, 0777)
 	_ = os.Mkdir(global.KademliaFilesPath, 0777)
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	// 優雅退出
+	go func() {
+		<-sigChan
+		global.ExitPrintln("Ok!")
+		os.Exit(0)
+	}()
 
 	flag.Usage = func() {
 		_, _ = fmt.Fprintf(os.Stderr, "Usage: \n")
