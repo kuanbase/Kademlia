@@ -20,7 +20,7 @@ func ReturnID(conn net.Conn, id dht.DhtID) error {
 
 	response := kencode.NewEncoder().ResponseGETID(id).Encode()
 
-	fmt.Printf("\rDebug> after encode: %v\n", id)
+	fmt.Printf("\rDebug> after encode: %v\n", response)
 
 	_, err := conn.Write([]byte(response))
 
