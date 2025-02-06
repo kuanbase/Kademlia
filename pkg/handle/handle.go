@@ -1,7 +1,6 @@
 package handle
 
 import (
-	"Kademlia/pkg/dht"
 	"Kademlia/pkg/global"
 	"Kademlia/pkg/kencode"
 	"Kademlia/pkg/peer"
@@ -129,18 +128,17 @@ func Cli(peerNode *peer.PeerNode) {
 				switch kenCode.Commands[i] {
 				case kencode.RETURNID:
 
-					fmt.Println("\rDEBUG> %v\n", kenCode.Values[i])
+					fmt.Printf("\rDEBUG> %v\n", kenCode.Values[i])
 
-					data, ok := kenCode.Values[i].([]byte)
+					id, ok := kenCode.Values[i].(string)
 
 					if !ok {
 						global.ErrPrintln("Please enter the dht id")
 						continue
 					}
 
-					id := dht.DhtID(data)
-
-					global.DhtIdPrintln(id)
+					// global.DhtIdPrintln(id)
+					fmt.Println(id)
 				default:
 					global.SystemPrintln("Unknown command: " + kenCode.Commands[i])
 				}
