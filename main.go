@@ -15,10 +15,6 @@ import (
 	"syscall"
 )
 
-var BootstrapNode = []string{
-	"",
-}
-
 var create = flag.String("create", "", "create a new node")
 var join = flag.String("join", "", "join nodes network")
 var ping = flag.String("ping", "", "ping node")
@@ -34,7 +30,8 @@ func Run(peerNode *peer.PeerNode) {
 	}
 	defer listener.Close()
 
-	fmt.Println("Kademlia: Listening on " + peerNode.Address.String())
+	global.SystemPrintln("Listening on " + peerNode.Address.String())
+	global.SystemPrintln("The Node ID is " + peerNode.DhtNode.ID.String())
 
 	// 輸入指令
 	go handle.Cli(peerNode)

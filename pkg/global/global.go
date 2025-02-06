@@ -23,6 +23,7 @@ var HomeDirectory string
 var KademliaDirectoryPath string
 var KademliaNodesPath string
 var KademliaFilesPath string
+var BootstrapNodeFilePath string
 
 func init() {
 	home, err := os.UserHomeDir()
@@ -35,14 +36,14 @@ func init() {
 	KademliaNodesPath = filepath.Join(home, KademliaNodesDirectoryName)
 	KademliaFilesPath = filepath.Join(home, KademliaFilesDirectoryName)
 
-	bootstrapNodeFilename := filepath.Join(KademliaNodesPath, "bootstrap_nodes.txt")
+	BootstrapNodeFilePath = filepath.Join(KademliaNodesPath, "bootstrap_nodes.txt")
 
-	_, err = os.Stat(bootstrapNodeFilename)
+	_, err = os.Stat(BootstrapNodeFilePath)
 	if os.IsNotExist(err) {
-		_, _ = os.Create(bootstrapNodeFilename)
-		bootstrapNodes := []string{"192.168.57.135:8081"}
+		_, _ = os.Create(BootstrapNodeFilePath)
+		bootstrapNodes := []string{"192.168.57.135:8081", "192.168.57.134:9011"}
 
-		f, err := os.OpenFile(bootstrapNodeFilename, os.O_WRONLY|os.O_TRUNC, 0777)
+		f, err := os.OpenFile(BootstrapNodeFilePath, os.O_WRONLY|os.O_TRUNC, 0777)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -113,8 +114,13 @@ func CmdInput() (string, string) {
 func ErrPrintln(e string) {
 	fmt.Printf("\rError> %s\n", e)
 }
+
 func ExitPrintln(s string) {
 	fmt.Printf("\rExit> %s\n", s)
+}
+
+func SystemPrintln(s string) {
+	fmt.Printf("\rSystem> %s\n", s)
 }
 
 func getDefaultGatewayInterface() (string, error) {

@@ -61,7 +61,7 @@ func (dhtNode *DhtNode) Distance(id DhtID) (int, error) {
 	return k, nil
 }
 
-func (dhtNode *DhtNode) addKBucket(id DhtID) error {
+func (dhtNode *DhtNode) AddKBucket(id DhtID) error {
 	distance, err := dhtNode.Distance(id)
 	if err != nil {
 		return err

@@ -46,6 +46,14 @@ func NewPeerNode(address string) (*PeerNode, error) {
 
 	netIP := net.ParseIP(ip)
 
+	// data, err := os.ReadFile(global.BootstrapNodeFilePath)
+
+	// lines := strings.Split(string(data), "\n")
+
+	// for _, line := range lines {
+	// 	dhtNode.AddKBucket()
+	// }
+
 	if netIP == nil {
 		return nil, errors.New("invalid ip")
 	}
