@@ -4,7 +4,7 @@ import "errors"
 
 type DhtID []byte
 
-func (d DhtID) String() string {
+func (d DhtID) ToString() string {
 	return string(d)
 }
 
