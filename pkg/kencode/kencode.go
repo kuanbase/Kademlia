@@ -1,22 +1,25 @@
 package kencode
 
 import (
+	"Kademlia/pkg/dht"
 	"fmt"
 	"strings"
 )
 
 const (
-	PING = "PING"
-	PONG = "PONG"
+	PING     = "PING"
+	PONG     = "PONG"
+	GETID    = "GETID"
+	RETURNID = "RETURNID"
 )
 
 type KenCode struct {
 	Commands []string
-	Values   []string
+	Values   []any
 }
 
 func NewKenCode() *KenCode {
-	return &KenCode{Commands: make([]string, 0), Values: make([]string, 0)}
+	return &KenCode{Commands: make([]string, 0), Values: make([]any, 0)}
 }
 
 type Encoder struct {
@@ -29,13 +32,25 @@ func (e *Encoder) Ping(address string) *Encoder {
 	return e
 }
 
-func (e *Encoder) ResponsePing() *Encoder {
+func (e *Encoder) ResponsePing(address string) *Encoder {
 	e.kenCode.Commands = append(e.kenCode.Commands, PONG)
-	e.kenCode.Values = append(e.kenCode.Values, "Alive")
+	e.kenCode.Values = append(e.kenCode.Values, address)
 	return e
 }
 
-func (e *Encoder) Store(data string) *Encoder {
+func (e *Encoder) GetID(address string) *Encoder {
+	e.kenCode.Commands = append(e.kenCode.Commands, GETID)
+	e.kenCode.Values = append(e.kenCode.Values, address) // 請求方需要出事地址
+	return e
+}
+
+func (e *Encoder) ResponseGETID(id dht.DhtID) *Encoder {
+	e.kenCode.Commands = append(e.kenCode.Commands, RETURNID)
+	e.kenCode.Values = append(e.kenCode.Values, id) // 返回Node ID
+	return e
+}
+
+func (e *Encoder) Store(data []byte) *Encoder {
 	e.kenCode.Commands = append(e.kenCode.Commands, "STORE")
 	e.kenCode.Values = append(e.kenCode.Values, data)
 	return e

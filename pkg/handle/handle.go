@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"Kademlia/pkg/dht"
 	"Kademlia/pkg/global"
 	"Kademlia/pkg/kencode"
 	"Kademlia/pkg/peer"
@@ -11,7 +12,7 @@ import (
 )
 
 // Server 處理信號
-func Server(conn net.Conn) {
+func Server(peerNode *peer.PeerNode, conn net.Conn) {
 	defer conn.Close()
 
 	buf := make([]byte, 10000)
@@ -26,13 +27,19 @@ func Server(conn net.Conn) {
 	for i := 0; i < len(kenCode.Commands); i++ {
 		switch kenCode.Commands[i] {
 		case kencode.PING:
-			response := kencode.NewEncoder().ResponsePing().Encode()
-			_, err := conn.Write([]byte(response))
+			err = Pong(conn)
 			if err != nil {
-				log.Println(err)
+				global.ErrPrintln(err.Error())
+				continue
+			}
+		case kencode.GETID:
+			err = ReturnID(conn, peerNode.DhtNode.ID)
+			if err != nil {
+				global.ErrPrintln(err.Error())
+				continue
 			}
 		default:
-			log.Printf("\rUnknown command: %s\n", kenCode.Commands[i])
+			global.SystemPrintln("Unknown command: " + kenCode.Commands[i])
 		}
 	}
 }
@@ -50,6 +57,12 @@ func Cli(peerNode *peer.PeerNode) {
 		switch command {
 		case "ping":
 			addr := strings.Split(value, ":")
+
+			if len(addr) != 2 {
+				global.ErrPrintln("Please enter the address like <ip>:<port>")
+				continue
+			}
+
 			ip := addr[0]
 			_, err := strconv.Atoi(addr[1])
 
@@ -63,9 +76,68 @@ func Cli(peerNode *peer.PeerNode) {
 				continue
 			}
 
-			err = peerNode.Ping(value)
+			kenCode, err := Ping(peerNode, value)
 			if err != nil {
 				global.ErrPrintln(err.Error())
+			}
+
+			for i := 0; i < len(kenCode.Commands); i++ {
+				switch kenCode.Commands[i] {
+				case kencode.PONG:
+					address, ok := kenCode.Values[i].(string)
+
+					if !ok {
+						global.ErrPrintln("Please enter the address like <ip>:<port>")
+						continue
+					}
+
+					global.PongPrintln(address)
+				default:
+					global.SystemPrintln("Unknown command: " + kenCode.Commands[i])
+				}
+			}
+		case "getid":
+			addr := strings.Split(value, ":")
+
+			if len(addr) != 2 {
+				global.ErrPrintln("Please enter the address like <ip>:<port>")
+				continue
+			}
+
+			ip := addr[0]
+			_, err := strconv.Atoi(addr[1])
+
+			if err != nil {
+				global.ErrPrintln("Please enter validation port.")
+				continue
+			}
+
+			if !global.ValidateIPAddress(ip) {
+				global.ErrPrintln("Please enter validation IP address.")
+				continue
+			}
+
+			kenCode, err := GetID(peerNode, value)
+
+			if err != nil {
+				global.ErrPrintln(err.Error())
+				continue
+			}
+
+			for i := 0; i < len(kenCode.Commands); i++ {
+				switch kenCode.Commands[i] {
+				case kencode.RETURNID:
+					id, ok := kenCode.Values[i].(dht.DhtID)
+
+					if !ok {
+						global.ErrPrintln("Please enter the dht id")
+						continue
+					}
+
+					global.DhtIdPrintln(id)
+				default:
+					global.SystemPrintln("Unknown command: " + kenCode.Commands[i])
+				}
 			}
 		}
 	}

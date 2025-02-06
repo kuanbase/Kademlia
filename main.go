@@ -44,7 +44,7 @@ func Run(peerNode *peer.PeerNode) {
 		}
 
 		// 處理信號
-		go handle.Server(conn)
+		go handle.Server(peerNode, conn)
 	}
 }
 

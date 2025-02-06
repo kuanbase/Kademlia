@@ -3,26 +3,21 @@ package peer
 import (
 	"Kademlia/pkg/dht"
 	"Kademlia/pkg/global"
-	"Kademlia/pkg/history"
-	"Kademlia/pkg/kencode"
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type PeerNode struct {
 	DhtNode        dht.DhtNode         // 本節點的Dht Node
 	Address        net.TCPAddr         // 本節點的 IP Address
 	DhtIDToAddress map[string]net.Addr // 將DhtID轉換成string 然後映射到對應用 IP Address
-	History        history.History     // 節點的一切歷史行為
+	// History        history.History     // 節點的一切歷史行為
 }
 
 func NewPeerNode(address string) (*PeerNode, error) {
@@ -101,67 +96,6 @@ func (peerNode *PeerNode) Unmarshal(data []byte) error {
 	if err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func (peerNode *PeerNode) Ping(address string) error {
-	conn, err := net.DialTimeout("tcp", address, 10*time.Second)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	msg := kencode.NewEncoder().Ping(address).Encode()
-
-	_, err = conn.Write([]byte(msg))
-	if err != nil {
-		return err
-	}
-
-	buf := make([]byte, 10000)
-
-	// conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-	_, err = conn.Read(buf)
-	if err != nil {
-		return err
-	}
-
-	kenCode := kencode.NewDecoder(string(buf)).Decode()
-
-	for i := 0; i < len(kenCode.Commands); i++ {
-		switch kenCode.Commands[i] {
-		case kencode.PONG:
-			fmt.Printf("\r%s> %s: PONG\n", conn.RemoteAddr().String(), kenCode.Values[i])
-		default:
-			log.Printf("\rUnknown command: %s\n", kenCode.Commands[i])
-		}
-	}
-
-	return nil
-}
-
-func (peerNode *PeerNode) Store(id dht.DhtID) error {
-
-	return nil
-}
-
-func (peerNode *PeerNode) FindNode() error {
-
-	return nil
-}
-
-func (peerNode *PeerNode) FindValue() error {
-
-	return nil
-}
-
-func (peerNode *PeerNode) Download() error {
-
-	return nil
-}
-
-func (peerNode *PeerNode) Upload() error {
 
 	return nil
 }

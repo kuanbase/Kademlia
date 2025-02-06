@@ -1,6 +1,7 @@
 package global
 
 import (
+	"Kademlia/pkg/dht"
 	"bufio"
 	"fmt"
 	"log"
@@ -121,6 +122,14 @@ func ExitPrintln(s string) {
 
 func SystemPrintln(s string) {
 	fmt.Printf("\rSystem> %s\n", s)
+}
+
+func PongPrintln(address string) {
+	fmt.Printf("\r%s> PONG\n", address)
+}
+
+func DhtIdPrintln(id dht.DhtID) {
+	fmt.Printf("\rReturn ID> %v\n", id)
 }
 
 func getDefaultGatewayInterface() (string, error) {
