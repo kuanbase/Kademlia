@@ -2,7 +2,7 @@ package main
 
 import (
 	"Kademlia/pkg/global"
-	"Kademlia/pkg/kencode"
+	"Kademlia/pkg/handle"
 	"Kademlia/pkg/peer"
 	"flag"
 	"fmt"
@@ -10,7 +10,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -35,79 +34,18 @@ func Run(peerNode *peer.PeerNode) {
 
 	fmt.Println("Kademlia: Listening on " + peerNode.Address.String())
 
-	go func() {
-		for {
-			var command, value string
-			fmt.Print("Kademlia Commander> ")
-			_, _ = fmt.Scanf("%s %s", &command, &value)
-			fmt.Scanln()
-
-			if command == "" || value == "" {
-				fmt.Println("\rEmpty Input")
-				continue
-			}
-
-			switch command {
-			case "ping":
-				addr := strings.Split(value, ":")
-				ip := addr[0]
-				_, err := strconv.Atoi(addr[1])
-
-				if err != nil {
-					log.Println(err)
-					// continue
-				}
-
-				if !global.ValidateIPAddress(ip) {
-					log.Println("Kademlia: Invalid IP address, Please Try it Again")
-					// continue
-				}
-
-				err = peerNode.Ping(value)
-				if err != nil {
-					log.Println(err)
-				}
-			}
-		}
-	}()
+	// 輸入指令
+	go handle.Cli(peerNode)
 
 	// 監聽每一個連接
 	for {
 		conn, err := listener.Accept()
-		// fmt.Printf("\r%s> connection\n", conn.RemoteAddr().String())
 		if err != nil {
-			log.Println(err)
+			global.ErrPrintln(err.Error())
 		}
 
-		// 接收信號，並返回信號
-		go func() {
-			defer conn.Close()
-
-			buf := make([]byte, 10000)
-
-			_, err := conn.Read(buf)
-			if err != nil {
-				log.Println(err)
-			}
-
-			kenCode := kencode.NewDecoder(string(buf)).Decode()
-
-			for i := 0; i < len(kenCode.Commands); i++ {
-				switch kenCode.Commands[i] {
-				case kencode.PING:
-					response := kencode.NewEncoder().ResponsePing().Encode()
-					_, err := conn.Write([]byte(response))
-					if err != nil {
-						log.Println(err)
-					}
-				// case kencode.PONG:
-				// 	fmt.Printf("%s> %s: PONG", conn.RemoteAddr().String(), kenCode.Values[i])
-				// 	fmt.Println("Kadelima Commander> ")
-				default:
-					log.Printf("\rUnknown command: %s\n", kenCode.Commands[i])
-				}
-			}
-		}()
+		// 處理信號
+		go handle.Server(conn)
 	}
 }
 
@@ -128,13 +66,6 @@ func main() {
 	}
 
 	flag.Parse()
-
-	bootstrapNodeFilename := filepath.Join(global.KademliaNodesPath, "bootstrap_nodes.txt")
-
-	_, err := os.Stat(bootstrapNodeFilename)
-	if os.IsNotExist(err) {
-		_, _ = os.Create(bootstrapNodeFilename)
-	}
 
 	if *create != "" {
 		fmt.Println("Create node:", *create)

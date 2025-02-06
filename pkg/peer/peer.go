@@ -3,6 +3,7 @@ package peer
 import (
 	"Kademlia/pkg/dht"
 	"Kademlia/pkg/global"
+	"Kademlia/pkg/history"
 	"Kademlia/pkg/kencode"
 	"bytes"
 	"encoding/json"
@@ -20,7 +21,8 @@ import (
 type PeerNode struct {
 	DhtNode        dht.DhtNode         // 本節點的Dht Node
 	Address        net.TCPAddr         // 本節點的 IP Address
-	DhtIDToAddress map[string]net.Addr // 將DhtID 轉換成string 然後映射到對應用 IP Address
+	DhtIDToAddress map[string]net.Addr // 將DhtID轉換成string 然後映射到對應用 IP Address
+	History        history.History     // 節點的一切歷史行為
 }
 
 func NewPeerNode(address string) (*PeerNode, error) {
@@ -99,18 +101,6 @@ func (peerNode *PeerNode) Ping(address string) error {
 
 	msg := kencode.NewEncoder().Ping(address).Encode()
 
-	// writer := bufio.NewWriter(conn)
-
-	// _, err = writer.Write([]byte(msg))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = writer.Flush()
-	// if err != nil {
-	// 	return err
-	// }
-
 	_, err = conn.Write([]byte(msg))
 	if err != nil {
 		return err
@@ -138,7 +128,7 @@ func (peerNode *PeerNode) Ping(address string) error {
 	return nil
 }
 
-func (peerNode *PeerNode) Store() error {
+func (peerNode *PeerNode) Store(id dht.DhtID) error {
 
 	return nil
 }
