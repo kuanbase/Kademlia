@@ -42,7 +42,8 @@ func init() {
 	_, err = os.Stat(BootstrapNodeFilePath)
 	if os.IsNotExist(err) {
 		_, _ = os.Create(BootstrapNodeFilePath)
-		bootstrapNodes := []string{"192.168.57.135:8081", "192.168.57.134:9011"}
+		bootstrapNodes := []string{"192.168.57.135:8081 37bfc8fc4ba95a484dedef39b48ace4147cdf0ca",
+			"192.168.57.134:9011 990f3627bee48e785525b373c070cc4eae0f491b"}
 
 		f, err := os.OpenFile(BootstrapNodeFilePath, os.O_WRONLY|os.O_TRUNC, 0777)
 		if err != nil {
@@ -120,8 +121,8 @@ func ExitPrintln(s string) {
 	fmt.Printf("\rExit> %s\n", s)
 }
 
-func SystemPrintln(s string) {
-	fmt.Printf("\rSystem> %s\n", s)
+func SystemPrintln(s any) {
+	fmt.Printf("\rSystem> %v\n", s)
 }
 
 func PongPrintln(address string) {

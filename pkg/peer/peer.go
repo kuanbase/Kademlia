@@ -4,6 +4,7 @@ import (
 	"Kademlia/pkg/dht"
 	"Kademlia/pkg/global"
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net"
@@ -33,25 +34,43 @@ func NewPeerNode(address string) (*PeerNode, error) {
 	}
 
 	ip := addr[0]
-	port, err := strconv.Atoi(addr[1])
 
+	port, err := strconv.Atoi(addr[1])
 	if err != nil {
 		return nil, err
 	}
 
 	netIP := net.ParseIP(ip)
 
-	// data, err := os.ReadFile(global.BootstrapNodeFilePath)
+	data, err := os.ReadFile(global.BootstrapNodeFilePath)
+	if err != nil {
+		return nil, err
+	}
 
-	// lines := strings.Split(string(data), "\n")
+	lines := strings.Split(string(data), "\n")
 
-	// for _, line := range lines {
-	// 	dhtNode.AddKBucket()
-	// }
+	for _, line := range lines {
+		s := strings.Split(line, " ")
+
+		if len(s) != 2 {
+			return nil, errors.New("bootstape file format error")
+		}
+
+		sid := strings.TrimSpace(s[1])
+
+		id, err := hex.DecodeString(sid)
+		if err != nil {
+			return nil, err
+		}
+
+		dhtNode.AddKBucket(id)
+	}
 
 	if netIP == nil {
 		return nil, errors.New("invalid ip")
 	}
+
+	global.SystemPrintln(dhtNode)
 
 	return &PeerNode{DhtNode: *dhtNode, Address: net.TCPAddr{IP: netIP, Port: port}}, nil
 }
