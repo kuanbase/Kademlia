@@ -3,7 +3,6 @@ package handle
 import (
 	"Kademlia/pkg/dht"
 	"Kademlia/pkg/kencode"
-	"encoding/hex"
 	"net"
 )
 
@@ -16,7 +15,7 @@ func Pong(conn net.Conn) error {
 }
 
 func ReturnID(conn net.Conn, id dht.DhtID) error {
-	sid := hex.EncodeToString(id)
+	sid := id.ToString()
 
 	response := kencode.NewEncoder().ResponseGETID(sid).Encode()
 
