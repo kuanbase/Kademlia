@@ -1,7 +1,6 @@
 package handle
 
 import (
-	"Kademlia/pkg/dht"
 	"Kademlia/pkg/global"
 	"Kademlia/pkg/kencode"
 	"Kademlia/pkg/peer"
@@ -131,7 +130,7 @@ func Cli(peerNode *peer.PeerNode) {
 
 					fmt.Printf("\rDEBUG> %v\n", kenCode.Values[i])
 
-					id, ok := kenCode.Values[i].(dht.DhtID)
+					id, ok := kenCode.Values[i].([]byte)
 
 					if !ok {
 						global.ErrPrintln("Please enter the dht id")
