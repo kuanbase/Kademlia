@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -62,6 +63,8 @@ func NewPeerNode(address string) (*PeerNode, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		fmt.Println(id)
 
 		dhtNode.AddKBucket(id)
 	}
