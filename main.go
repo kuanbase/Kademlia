@@ -31,7 +31,7 @@ func Run(peerNode *peer.PeerNode) {
 	defer listener.Close()
 
 	global.SystemPrintln("Listening on " + peerNode.Address.String())
-	global.SystemPrintln("The Node id is: ", peerNode.DhtNode.ID)
+	global.SystemPrintln("The Node id is: " + peerNode.DhtNode.ID.ToString())
 
 	// 輸入指令
 	go handle.Cli(peerNode)

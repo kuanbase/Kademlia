@@ -1,11 +1,15 @@
 package dht
 
-import "errors"
+import (
+	"encoding/hex"
+	"errors"
+)
 
 type DhtID []byte
 
 func (d DhtID) ToString() string {
-	return string(d)
+	sid := hex.EncodeToString(d)
+	return sid
 }
 
 func NewDhtID() (DhtID, error) {
