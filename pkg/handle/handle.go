@@ -4,6 +4,7 @@ import (
 	"Kademlia/pkg/global"
 	"Kademlia/pkg/kencode"
 	"Kademlia/pkg/peer"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -130,15 +131,20 @@ func Cli(peerNode *peer.PeerNode) {
 
 					fmt.Printf("\rDEBUG> %v\n", kenCode.Values[i])
 
-					id, ok := kenCode.Values[i].([]byte)
+					sid, ok := kenCode.Values[i].(string)
 
 					if !ok {
 						global.ErrPrintln("Please enter the dht id")
 						continue
 					}
 
+					id, err := hex.DecodeString(sid)
+					if err != nil {
+						global.ErrPrintln(err.Error())
+						continue
+					}
+
 					global.DhtIdPrintln(id)
-					// fmt.Println(id)
 				default:
 					global.SystemPrintln("Unknown command: " + kenCode.Commands[i])
 				}

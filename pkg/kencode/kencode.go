@@ -1,7 +1,6 @@
 package kencode
 
 import (
-	"Kademlia/pkg/dht"
 	"fmt"
 	"strings"
 )
@@ -44,7 +43,7 @@ func (e *Encoder) GetID(address string) *Encoder {
 	return e
 }
 
-func (e *Encoder) ResponseGETID(id dht.DhtID) *Encoder {
+func (e *Encoder) ResponseGETID(id string) *Encoder {
 	e.kenCode.Commands = append(e.kenCode.Commands, RETURNID)
 	e.kenCode.Values = append(e.kenCode.Values, id) // 返回Node ID
 	return e
