@@ -48,8 +48,7 @@ func init() {
 		_, _ = os.Create(BootstrapNodeFilePath)
 	}
 
-	bootstrapNodes := []string{"192.168.57.135:8081 37bfc8fc4ba95a484dedef39b48ace4147cdf0ca",
-		"192.168.57.134:9011 990f3627bee48e785525b373c070cc4eae0f491b"}
+	bootstrapNodes := []string{""}
 
 	f, err := os.OpenFile(BootstrapNodeFilePath, os.O_WRONLY|os.O_TRUNC, 0777)
 	if err != nil {
