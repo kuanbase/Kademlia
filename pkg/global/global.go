@@ -120,8 +120,12 @@ func ExitPrintln(s string) {
 	fmt.Printf("\rExit> %s\n", s)
 }
 
-func SystemPrintln(s string) {
-	fmt.Printf("\rSystem> %s\n", s)
+func SystemPrintln(s ...any) {
+	for _, t := range s {
+		fmt.Printf("\rSystem> %v", t)
+	}
+
+	fmt.Println()
 }
 
 func PongPrintln(address string) {
