@@ -21,7 +21,7 @@ func NewDhtID() (DhtID, error) {
 	return nodeID, nil
 }
 func (d DhtID) XOR(id DhtID) (DhtID, error) {
-	if len(d) != DhtIDSize || len(id) != DhtIDSize {
+	if len(d) != DhtIDBytesSize || len(id) != DhtIDBytesSize {
 		return nil, errors.New("invalid DhtID")
 	}
 

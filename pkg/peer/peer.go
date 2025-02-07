@@ -28,6 +28,8 @@ func NewPeerNode(address string) (*PeerNode, error) {
 		return nil, err
 	}
 
+	fmt.Println(dhtNode.ID)
+
 	addr := strings.Split(address, ":")
 
 	if len(addr) != 2 {
@@ -66,7 +68,10 @@ func NewPeerNode(address string) (*PeerNode, error) {
 
 		fmt.Println(id)
 
-		dhtNode.AddKBucket(id)
+		err = dhtNode.AddKBucket(dht.DhtID(id))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if netIP == nil {

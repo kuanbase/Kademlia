@@ -2,34 +2,37 @@ package dht
 
 import (
 	"crypto/rand"
-	"crypto/sha1"
 	"errors"
+	"fmt"
 	"io"
 )
 
 const (
-	BucketSize = 160
-	DhtIDSize  = 160
+	BucketBitsSize  = 160
+	BucketBytesSize = BucketBitsSize / 8
+	DhtIDBytesSize  = BucketBitsSize / 8
 )
 
 type DhtNode struct {
 	ID       DhtID
-	KBuckets [BucketSize][]DhtID
+	KBuckets [BucketBytesSize][]DhtID
 }
 
 func generateNodeID() ([]byte, error) {
-	randomBytes := make([]byte, BucketSize)
+	randomBytes := make([]byte, DhtIDBytesSize)
+
+	fmt.Println(len(randomBytes))
 
 	_, err := io.ReadFull(rand.Reader, randomBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	hash := sha1.New()
-	hash.Write(randomBytes)
-	nodeID := hash.Sum(nil)
+	// hash := sha1.New()
+	// hash.Write(randomBytes)
+	// nodeID := hash.Sum(nil)
 
-	return nodeID, nil
+	return randomBytes, nil
 }
 
 func NewDhtNode() (*DhtNode, error) {
@@ -48,7 +51,7 @@ func (dhtNode *DhtNode) Distance(id DhtID) (int, error) {
 		return 0, err
 	}
 
-	k := DhtIDSize
+	k := DhtIDBytesSize - 1
 
 	for i := 0; i < len(result); i++ {
 		if result[i] != id[k] {
@@ -66,6 +69,8 @@ func (dhtNode *DhtNode) AddKBucket(id DhtID) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(distance)
 
 	if dhtNode.KBuckets[distance-1] == nil {
 		dhtNode.KBuckets[distance-1] = make([]DhtID, 0)
