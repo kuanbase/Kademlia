@@ -49,10 +49,6 @@ func Run(peerNode *peer.PeerNode) {
 }
 
 func main() {
-	_ = os.Mkdir(global.KademliaDirectoryPath, 0777)
-	_ = os.Mkdir(global.KademliaNodesPath, 0777)
-	_ = os.Mkdir(global.KademliaFilesPath, 0777)
-
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 

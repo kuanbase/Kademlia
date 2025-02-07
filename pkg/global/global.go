@@ -37,6 +37,10 @@ func init() {
 	KademliaNodesPath = filepath.Join(home, KademliaNodesDirectoryName)
 	KademliaFilesPath = filepath.Join(home, KademliaFilesDirectoryName)
 
+	_ = os.Mkdir(KademliaDirectoryPath, 0777)
+	_ = os.Mkdir(KademliaNodesPath, 0777)
+	_ = os.Mkdir(KademliaFilesPath, 0777)
+
 	BootstrapNodeFilePath = filepath.Join(KademliaNodesPath, "bootstrap_nodes.txt")
 
 	_, err = os.Stat(BootstrapNodeFilePath)
