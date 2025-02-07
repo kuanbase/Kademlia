@@ -55,7 +55,7 @@ func init() {
 		}
 		defer f.Close()
 
-		_, err = f.Write([]byte(strings.Join(bootstrapNodes, "")))
+		_, err = f.Write([]byte(strings.Join(bootstrapNodes, "\n")))
 		if err != nil {
 			log.Fatal(err)
 		}
