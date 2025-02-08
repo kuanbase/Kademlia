@@ -2,8 +2,7 @@ package dht
 
 import (
 	"crypto/rand"
-	"errors"
-	"fmt"
+	"crypto/sha1"
 	"io"
 )
 
@@ -15,24 +14,22 @@ const (
 
 type DhtNode struct {
 	ID       DhtID
-	KBuckets [BucketBytesSize][]DhtID
+	KBuckets [BucketBitsSize][]DhtID
 }
 
 func generateNodeID() ([]byte, error) {
 	randomBytes := make([]byte, DhtIDBytesSize)
-
-	fmt.Println(len(randomBytes))
 
 	_, err := io.ReadFull(rand.Reader, randomBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	// hash := sha1.New()
-	// hash.Write(randomBytes)
-	// nodeID := hash.Sum(nil)
+	hash := sha1.New()
+	hash.Write(randomBytes)
+	nodeID := hash.Sum(nil)
 
-	return randomBytes, nil
+	return nodeID, nil
 }
 
 func NewDhtNode() (*DhtNode, error) {
@@ -51,14 +48,22 @@ func (dhtNode *DhtNode) Distance(id DhtID) (int, error) {
 		return 0, err
 	}
 
-	k := DhtIDBytesSize - 1
+	k := BucketBitsSize
 
 	for i := 0; i < len(result); i++ {
-		if result[i] != id[k] {
-			break
-		}
+		x := result[i] ^ id[i]
 
-		k--
+		for j := 0; j < 8; j++ {
+			b := x & 1
+
+			if b == 0 {
+				k--
+			} else {
+				return k, nil
+			}
+
+			x >>= 1
+		}
 	}
 
 	return k, nil
@@ -70,8 +75,6 @@ func (dhtNode *DhtNode) AddKBucket(id DhtID) error {
 		return err
 	}
 
-	fmt.Println(distance)
-
 	if dhtNode.KBuckets[distance-1] == nil {
 		dhtNode.KBuckets[distance-1] = make([]DhtID, 0)
 	}
@@ -79,17 +82,4 @@ func (dhtNode *DhtNode) AddKBucket(id DhtID) error {
 	dhtNode.KBuckets[distance-1] = append(dhtNode.KBuckets[distance-1], id)
 
 	return nil
-}
-
-func (dhtNode *DhtNode) FindKBucketByDhtID(id DhtID) ([]DhtID, error) {
-	distance, err := dhtNode.Distance(id)
-	if err != nil {
-		return nil, err
-	}
-
-	if dhtNode.KBuckets[distance-1] == nil {
-		return nil, errors.New("not found")
-	}
-
-	return dhtNode.KBuckets[distance-1], nil
 }

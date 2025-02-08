@@ -48,7 +48,7 @@ func init() {
 		_, _ = os.Create(BootstrapNodeFilePath)
 	}
 
-	bootstrapNodes := []string{""}
+	bootstrapNodes := []string{"192.168.57.135:8002 5c1364efe1adb8874f27551834aef5a8493cd683", "192.168.57.134:8888 9277335fa9c36ce7e6435b76a9de36ef07400a90"}
 
 	f, err := os.OpenFile(BootstrapNodeFilePath, os.O_WRONLY|os.O_TRUNC, 0777)
 	if err != nil {
@@ -135,6 +135,10 @@ func PongPrintln(address string) {
 
 func DhtIdPrintln(id dht.DhtID) {
 	fmt.Printf("\rReturn ID> %v\n", id)
+}
+
+func AddressPrintln(address string) {
+	fmt.Printf("\rReturn Address> %s\n", address)
 }
 
 func getDefaultGatewayInterface() (string, error) {

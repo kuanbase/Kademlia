@@ -1,15 +1,19 @@
 package kencode
 
 import (
+	"Kademlia/pkg/dht"
 	"fmt"
 	"strings"
 )
 
 const (
-	PING     = "PING"
-	PONG     = "PONG"
-	GETID    = "GETID"
-	RETURNID = "RETURNID"
+	PING       = "PING"
+	PONG       = "PONG"
+	GETID      = "GETID"
+	RETURNID   = "RETURNID"
+	FINDNODE   = "FINDNODE"
+	RETURNNODE = "RETURNNODE"
+	RETURNNULL = "RETURNNULL"
 )
 
 type KenCode struct {
@@ -52,6 +56,24 @@ func (e *Encoder) ResponseGETID(id string) *Encoder {
 func (e *Encoder) Store(data []byte) *Encoder {
 	e.kenCode.Commands = append(e.kenCode.Commands, "STORE")
 	e.kenCode.Values = append(e.kenCode.Values, data)
+	return e
+}
+
+func (e *Encoder) FindNode(id dht.DhtID) *Encoder {
+	e.kenCode.Commands = append(e.kenCode.Commands, FINDNODE)
+	e.kenCode.Values = append(e.kenCode.Values, id)
+	return e
+}
+
+func (e *Encoder) ResponseFindNode(address string) *Encoder {
+	if address != "" {
+		e.kenCode.Commands = append(e.kenCode.Commands, RETURNNODE)
+		e.kenCode.Values = append(e.kenCode.Values, address)
+	} else {
+		e.kenCode.Commands = append(e.kenCode.Commands, RETURNNULL)
+		e.kenCode.Values = append(e.kenCode.Values, address)
+	}
+
 	return e
 }
 

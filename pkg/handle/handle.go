@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"Kademlia/pkg/dht"
 	"Kademlia/pkg/global"
 	"Kademlia/pkg/kencode"
 	"Kademlia/pkg/peer"
@@ -38,6 +39,16 @@ func Server(peerNode *peer.PeerNode, conn net.Conn) {
 				global.ErrPrintln(err.Error())
 				continue
 			}
+		case kencode.FINDNODE:
+			id, ok := kenCode.Values[i].(dht.DhtID)
+
+			if !ok {
+				global.ErrPrintln("Dht Id Convert Error")
+				continue
+			}
+
+			FindNode(peerNode, id)
+
 		default:
 			global.SystemPrintln("Unknown command: " + kenCode.Commands[i])
 		}
@@ -141,6 +152,30 @@ func Cli(peerNode *peer.PeerNode) {
 					}
 
 					global.DhtIdPrintln(id)
+				default:
+					global.SystemPrintln("Unknown command: " + kenCode.Commands[i])
+				}
+			}
+		case "findnode":
+			kenCode, err := FindNode(peerNode, []byte(value))
+			if err != nil {
+				global.ErrPrintln(err.Error())
+				continue
+			}
+
+			for i := 0; i < len(kenCode.Commands); i++ {
+				switch kenCode.Commands[i] {
+				case kencode.RETURNNODE:
+					address, ok := kenCode.Values[i].(string)
+
+					if !ok {
+						global.ErrPrintln("RETURN NODE ERROR")
+						continue
+					}
+
+					global.AddressPrintln(address)
+				case kencode.RETURNNULL:
+					global.AddressPrintln("not found")
 				default:
 					global.SystemPrintln("Unknown command: " + kenCode.Commands[i])
 				}

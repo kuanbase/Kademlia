@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -16,9 +15,9 @@ import (
 )
 
 type PeerNode struct {
-	DhtNode        dht.DhtNode         // 本節點的Dht Node
-	Address        net.TCPAddr         // 本節點的 IP Address
-	DhtIDToAddress map[string]net.Addr // 將DhtID轉換成string 然後映射到對應用 IP Address
+	DhtNode        dht.DhtNode            // 本節點的Dht Node
+	Address        net.TCPAddr            // 本節點的 IP Address
+	DhtIDToAddress map[string]net.TCPAddr // 將DhtID轉換成string 然後映射到對應用 IP Address
 	// History        history.History     // 節點的一切歷史行為
 }
 
@@ -27,8 +26,6 @@ func NewPeerNode(address string) (*PeerNode, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(dhtNode.ID)
 
 	addr := strings.Split(address, ":")
 
@@ -45,6 +42,10 @@ func NewPeerNode(address string) (*PeerNode, error) {
 
 	netIP := net.ParseIP(ip)
 
+	if netIP == nil {
+		return nil, errors.New("invalid ip")
+	}
+
 	data, err := os.ReadFile(global.BootstrapNodeFilePath)
 	if err != nil {
 		return nil, err
@@ -52,35 +53,57 @@ func NewPeerNode(address string) (*PeerNode, error) {
 
 	lines := strings.Split(string(data), "\n")
 
+	dhtIDToAddress := make(map[string]net.TCPAddr)
+
 	for _, line := range lines {
+		if line == "" {
+			break
+		}
+
 		s := strings.Split(line, " ")
 
 		if len(s) != 2 {
 			return nil, errors.New("bootstape file format error")
 		}
 
-		sid := strings.TrimSpace(s[1])
+		bootstapeNodeAddress := strings.TrimSpace(s[0])
 
-		id, err := hex.DecodeString(sid)
+		address := strings.Split(bootstapeNodeAddress, ":")
+
+		if len(address) != 2 {
+			return nil, errors.New("bootstape file format error")
+		}
+
+		bootstapeIP := strings.TrimSpace(address[0])
+		bootstapePort := strings.TrimSpace(address[1])
+		port, err := strconv.Atoi(bootstapePort)
+		if err != nil {
+			return nil, errors.New("bootstape file format error")
+		}
+
+		bootstapeSid := strings.TrimSpace(s[1])
+
+		bootstapeId, err := hex.DecodeString(bootstapeSid)
 		if err != nil {
 			return nil, err
 		}
 
-		fmt.Println(id)
+		bootstapeNetIp := net.ParseIP(bootstapeIP)
+		if bootstapeNetIp == nil {
+			return nil, errors.New("boostape invalid ip")
+		}
 
-		err = dhtNode.AddKBucket(dht.DhtID(id))
+		dhtIDToAddress[dht.DhtID(bootstapeId).ToString()] = net.TCPAddr{IP: bootstapeNetIp, Port: port}
+
+		err = dhtNode.AddKBucket(dht.DhtID(bootstapeId))
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if netIP == nil {
-		return nil, errors.New("invalid ip")
 	}
 
 	global.SystemPrintln(dhtNode)
 
-	return &PeerNode{DhtNode: *dhtNode, Address: net.TCPAddr{IP: netIP, Port: port}}, nil
+	return &PeerNode{DhtNode: *dhtNode, Address: net.TCPAddr{IP: netIP, Port: port}, DhtIDToAddress: dhtIDToAddress}, nil
 }
 
 func NewPeerNodeByPeerFile(filename string) (*PeerNode, error) {
@@ -123,6 +146,17 @@ func (peerNode *PeerNode) Unmarshal(data []byte) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (peerNode *PeerNode) AddNode(id dht.DhtID, ip string, port int) error {
+	netIP := net.ParseIP(ip)
+	if netIP == nil {
+		return errors.New("invalid ip")
+	}
+
+	peerNode.DhtIDToAddress[id.ToString()] = net.TCPAddr{IP: netIP, Port: port}
 
 	return nil
 }

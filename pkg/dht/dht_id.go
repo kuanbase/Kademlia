@@ -33,3 +33,17 @@ func (d DhtID) XOR(id DhtID) (DhtID, error) {
 
 	return result, nil
 }
+
+func (d DhtID) Equal(id DhtID) bool {
+	if len(d) != len(id) {
+		return false
+	}
+
+	for i := 0; i < len(d); i++ {
+		if d[i] != id[i] {
+			return false
+		}
+	}
+
+	return true
+}
