@@ -137,6 +137,10 @@ func DhtIdPrintln(id dht.DhtID) {
 	fmt.Printf("\rReturn ID> %v\n", id)
 }
 
+func DhtSidPrintln(sid string) {
+	fmt.Printf("\rReturn SID> %v\n", sid)
+}
+
 func AddressPrintln(address string) {
 	fmt.Printf("\rReturn Address> %s\n", address)
 }

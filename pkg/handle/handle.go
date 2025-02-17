@@ -145,19 +145,25 @@ func Cli(peerNode *peer.PeerNode) {
 						continue
 					}
 
-					id, err := hex.DecodeString(sid)
+					_, err := hex.DecodeString(sid)
 					if err != nil {
 						global.ErrPrintln(err.Error())
 						continue
 					}
 
-					global.DhtIdPrintln(id)
+					global.DhtSidPrintln(sid)
 				default:
 					global.SystemPrintln("Unknown command: " + kenCode.Commands[i])
 				}
 			}
 		case "findnode":
-			kenCode, err := FindNode(peerNode, []byte(value))
+			id, err := hex.DecodeString(value)
+			if err != nil {
+				global.ErrPrintln(err.Error())
+				continue
+			}
+
+			kenCode, err := FindNode(peerNode, id)
 			if err != nil {
 				global.ErrPrintln(err.Error())
 				continue
